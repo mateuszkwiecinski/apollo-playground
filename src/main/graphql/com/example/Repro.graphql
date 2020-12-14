@@ -1,0 +1,40 @@
+query Books {
+  viewer {
+    books {
+      ...bookFragment
+    }
+  }
+}
+
+
+query Nested {
+  viewer {
+    nested(limit: 1) {
+      books { id }
+      ...nestedBook
+    }
+  }
+}
+
+query Unrelated {
+  viewer {
+    something {
+      id
+      name
+    }
+  }
+}
+
+fragment bookFragment on Book {
+  id
+  name
+}
+
+
+fragment nestedBook on NestedContainer {
+  books {
+    book {
+      id
+    }
+  }
+}

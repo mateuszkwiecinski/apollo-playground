@@ -1,0 +1,29 @@
+type Query {
+  viewer: Viewer!
+}
+
+type Viewer {
+  books: [Book]!
+  something: [Unrelated]!
+  nested(limit: Int): [NestedContainer!]!
+}
+
+type Book {
+  id: String!
+  name: String
+}
+
+type Unrelated {
+  id: String!
+  name: String
+}
+
+type NestedContainer {
+  id: String!
+  books: [Nested!]!
+}
+
+type Nested {
+  id: String!
+  book: Book!
+}
