@@ -1,96 +1,29 @@
 package com.example
 
-import com.apollographql.apollo3.api.ApolloResponse
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
+import com.apollographql.apollo3.cache.normalized.apolloStore
+import com.example.fragment.SectionFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class Test : TestBase() {
 
   @Test
-  fun `cache only in parallel`() = runBlocking {
-    mockWebServer.enqueue(response)
-    val (prefetch, prefetchJob) = watch(
-      query = BooksQuery(),
-      fetchPolicy = FetchPolicy.NetworkOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
-    )
-    val (cache_only, firstJob) = watch(
-      query = BooksQuery(),
-      fetchPolicy = FetchPolicy.CacheOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
-    )
-
-    val receivedFirst = prefetch.receiveAsFlow().first()
-    val receivedSecond = cache_only.receiveAsFlow().first()
-    check(receivedFirst.data == receivedSecond.data)
-
-    prefetchJob.cancel()
-    firstJob.cancel()
-  }
-
-  @Test
-  fun `disjoint queries`() = runBlocking {
-    // start cache only
-    val (cache_only, cacheOnlyJob) = watch(
-      query = BooksQuery(),
-      fetchPolicy = FetchPolicy.CacheOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
-    )
-    val values = mutableListOf<ApolloResponse<BooksQuery.Data>>()
-    launch {
-      for (response in cache_only) {
-        values.add(response)
-      }
-    }
-    check(mockWebServer.mockWebServer.requestCount == 0)
-
-    // make unrelated query
-    mockWebServer.enqueue(unrelatedQuery)
-    val (unrelated, unrelatedJob) = watch(
-      query = UnrelatedQuery(),
-      fetchPolicy = FetchPolicy.NetworkOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
-    )
-    val unrelatedResponse = unrelated.receiveAsFlow().first()
-    checkNotNull(unrelatedResponse.data)
-
-    delay(100) // test is asynchronous, wait until_cache_only_emits
-    check(values.isEmpty())
-    check(mockWebServer.mockWebServer.requestCount == 1) // this fails
-
-    // trigger refresh
-    mockWebServer.enqueue(response)
-    val (networkOnly, networkOnlyJob) = watch(
-      query = BooksQuery(),
-      fetchPolicy = FetchPolicy.NetworkOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
-    )
-    val networkOnlyResponse = networkOnly.receiveAsFlow().first()
-    checkNotNull(networkOnlyResponse.data)
-    delay(100) // test is asynchronous, wait until_cache_only_emits
-    check(values.single().data == networkOnlyResponse.data)
-    check(mockWebServer.mockWebServer.requestCount == 2)
-
-    networkOnlyJob.cancel()
-    cacheOnlyJob.cancel()
-    unrelatedJob.cancel()
-  }
-
-  @Test
-  fun `nested response`() = runBlocking {
+  fun issue3672() = runBlocking {
     mockWebServer.enqueue(nestedResponse)
-    val (prefetch, prefetchJob) = watch(NestedQuery(), fetchPolicy = FetchPolicy.NetworkOnly, refetchPolicy = FetchPolicy.CacheFirst)
+    val (prefetch, prefetchJob) = watch(
+      query = Issue3672Query(),
+      fetchPolicy = FetchPolicy.NetworkOnly,
+      refetchPolicy = FetchPolicy.CacheFirst,
+      failFast = true,
+    )
     val receivedFirst = prefetch.receiveAsFlow().first()
     checkNotNull(receivedFirst.data)
     val (cache_only, firstJob) = watch(
-      query = NestedQuery(),
+      query = Issue3672Query(),
       fetchPolicy = FetchPolicy.CacheOnly,
       refetchPolicy = FetchPolicy.CacheFirst,
       failFast = true,
@@ -100,5 +33,39 @@ class Test : TestBase() {
 
     prefetchJob.cancel()
     firstJob.cancel()
+  }
+
+
+  @Test
+  internal fun issue2818() = runBlocking {
+    apollo.apolloStore.writeOperation(
+      Issue2818Query(),
+      Issue2818Query.Data(
+        Issue2818Query.Home(
+          __typename = "Home",
+          sectionA = Issue2818Query.SectionA(
+            name = "section-name",
+          ),
+          sectionFragment = SectionFragment(
+            sectionA = SectionFragment.SectionA(
+              id = "section-id",
+              imageUrl = "https://...",
+            ),
+          ),
+        ),
+      ),
+    )
+
+    val (prefetch, prefetchJob) = watch(
+      query = Issue2818Query(),
+      fetchPolicy = FetchPolicy.CacheOnly,
+      refetchPolicy = FetchPolicy.CacheOnly,
+      failFast = true,
+    )
+    val cached = prefetch.receiveAsFlow().first()
+    check(cached.data?.home?.sectionA?.name == "section-name")
+    check(cached.data?.home?.sectionFragment?.sectionA?.id == "section=id")
+    check(cached.data?.home?.sectionFragment?.sectionA?.imageUrl == "https://...")
+    prefetchJob.cancel()
   }
 }

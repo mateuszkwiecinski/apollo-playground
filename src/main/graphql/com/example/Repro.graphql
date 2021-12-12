@@ -1,40 +1,43 @@
-query Books {
+query Issue3672 {
   viewer {
-    books {
-      ...bookFragment
-    }
-  }
-}
-
-
-query Nested {
-  viewer {
-    nested(limit: 1) {
-      books { id }
+    libraries(limit: 1) {
+      book { id }
       ...nestedBook
+      ...anotherBookFragment
     }
   }
 }
 
-query Unrelated {
-  viewer {
-    something {
-      id
+fragment nestedBook on Library {
+  name
+  book {
+    name
+  }
+}
+
+fragment anotherBookFragment on Library {
+  book {
+    year
+  }
+}
+
+fragment bookAuthor on Book {
+  author
+}
+
+
+query Issue2818 {
+  home {
+    ...sectionFragment
+    sectionA {
       name
     }
   }
 }
 
-fragment bookFragment on Book {
-  id
-  name
-}
-
-
-fragment nestedBook on NestedContainer {
-  books {
-    book {
-      id
-    }
+fragment sectionFragment on Home {
+  sectionA {
+    id
+    imageUrl
   }
 }

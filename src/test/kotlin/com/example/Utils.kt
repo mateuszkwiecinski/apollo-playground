@@ -48,16 +48,8 @@ class MockWebServerTestRule : BeforeEachCallback, AfterEachCallback {
 internal object IdBasedCacheKeyResolver : CacheResolver, CacheKeyGenerator {
 
   override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext) =
-    if (context.field.name == "viewer") {
-      CacheKey("viewerId")
-    } else {
-      obj["id"]?.toString()?.let(::CacheKey) ?: TypePolicyCacheKeyGenerator.cacheKeyForObject(obj, context)
-    }
+    obj["id"]?.toString()?.let(::CacheKey) ?: TypePolicyCacheKeyGenerator.cacheKeyForObject(obj, context)
 
   override fun resolveField(field: CompiledField, variables: Executable.Variables, parent: Map<String, Any?>, parentId: String) =
-    if (field.name == "viewer") {
-      CacheKey("viewerId")
-    } else {
-      FieldPolicyCacheResolver.resolveField(field, variables, parent, parentId)
-    }
+    FieldPolicyCacheResolver.resolveField(field, variables, parent, parentId)
 }
