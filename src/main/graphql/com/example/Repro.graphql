@@ -1,43 +1,27 @@
-query Issue3672 {
+query GetLibraries {
   viewer {
     libraries(limit: 1) {
-      book { id }
-      ...nestedBook
-      ...anotherBookFragment
+      book {
+        ...book
+      }
     }
   }
 }
 
-fragment nestedBook on Library {
-  name
-  book {
-    name
+
+query GetBookDetails(
+  $id: String!
+) {
+  viewer {
+    book(id: $id) {
+      ...book
+    }
   }
 }
 
-fragment anotherBookFragment on Library {
-  book {
-    year
-  }
-}
-
-fragment bookAuthor on Book {
+fragment book on Book {
+  id,
+  name,
+  year,
   author
-}
-
-
-query Issue2818 {
-  home {
-    ...sectionFragment
-    sectionA {
-      name
-    }
-  }
-}
-
-fragment sectionFragment on Home {
-  sectionA {
-    id
-    imageUrl
-  }
 }

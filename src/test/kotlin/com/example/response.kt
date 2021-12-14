@@ -15,7 +15,7 @@ val nestedResponse = """
             "name": "library-1",
             "book":{
                 "__typename": "Book",
-                "id": "book=1",
+                "id": "book-1",
                 "name": "name-1",
                 "year": 1991,
                 "author": "John Doe"
