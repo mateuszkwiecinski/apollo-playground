@@ -12,14 +12,17 @@ val nestedResponse = """
         "libraries": [
           {
             "__typename": "Library",
-            "name": "library-1",
-            "book":{
-                "__typename": "Book",
-                "id": "book=1",
-                "name": "name-1",
-                "year": 1991,
-                "author": "John Doe"
-              }
+            "id": "library-1",
+            "books": [
+                  {
+                      "__typename": "Book",
+                      "id": "book-1",
+                      "author": {
+                        "__typename": "Author",
+                        "id": "author-1"
+                      }
+                  }
+              ]
             }
         ]
       }

@@ -11,21 +11,16 @@ type Book {
   id: String!
   name: String!
   year: Int!
-  author: String!
+  author: Author!
 }
 
 type Library {
   id: String!
   name: String!
-  book: Book!
+  books: [Book]!
 }
 
-type Home {
-  sectionA: SectionA
-}
-
-type SectionA {
+type Author {
   id: String!
   name: String!
-  imageUrl: String
 }
