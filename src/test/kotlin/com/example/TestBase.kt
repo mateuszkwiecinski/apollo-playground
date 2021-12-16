@@ -27,10 +27,11 @@ abstract class TestBase {
 
   @BeforeEach
   internal fun setUp() {
-    val lruNormalizedCacheFactory = MemoryCacheFactory()
+    val persistedCache = createInMemorySqlNormalizedCacheFactory()
+    val inMemoryCache = MemoryCacheFactory()
     apollo = ApolloClient.Builder()
       .normalizedCache(
-        normalizedCacheFactory = lruNormalizedCacheFactory,
+        normalizedCacheFactory = inMemoryCache.chain(persistedCache),
         cacheKeyGenerator = IdBasedCacheKeyResolver,
         cacheResolver = IdBasedCacheKeyResolver,
         writeToCacheAsynchronously = false
