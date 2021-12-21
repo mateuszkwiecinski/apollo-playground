@@ -1,16 +1,32 @@
-query NestedFragment {
+query GetAuthor($id: ID!) {
   viewer {
-    libraries(limit: 1) {
-      id
-      books { id }
-      ...nestedBook
+    author(id: $id) {
+      id,
+      name,
+      topBook {
+        id,
+        name
+        author {
+          id
+        }
+      }
     }
   }
 }
 
-fragment nestedBook on Library {
-  books {
-    author { id }
+query GetBook($id: ID!) {
+  viewer {
+    book(id: $id) {
+      ...bookData
+      author {
+        id,
+        name
+      }
+    }
   }
 }
 
+fragment bookData on Book {
+  id,
+  name
+}

@@ -9,22 +9,20 @@ val nestedResponse = """
     "data": {
       "viewer": {
         "__typename": "Viewer",
-        "libraries": [
-          {
-            "__typename": "Library",
-            "id": "library-1",
-            "books": [
-                  {
-                      "__typename": "Book",
-                      "id": "book-1",
-                      "author": {
-                        "__typename": "Author",
-                        "id": "author-1"
-                      }
-                  }
-              ]
+        "author": {
+          "__typename": "Author",
+          "id": "author-id",
+          "name": "author-name",
+          "topBook": {
+            "__typename": "Book",
+            "id": "book-id",
+            "name": "book-name",
+            "author": {
+              "__typename": "Author",
+              "id": "author-id"
             }
-        ]
+          }
+        }
       }
     }
   }

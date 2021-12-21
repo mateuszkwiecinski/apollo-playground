@@ -12,24 +12,25 @@ import org.junit.jupiter.api.Test
 class Test : TestBase() {
 
   @Test
-  fun `apollo store remove(cascade=true)`() = runBlocking {
+  fun `the same object, nested`() = runBlocking {
     mockWebServer.enqueue(nestedResponse)
     val (prefetch, prefetchJob) = watch(
-      query = NestedFragmentQuery(),
+      query = GetAuthorQuery(id = "author-id"),
       fetchPolicy = FetchPolicy.NetworkOnly,
-      refetchPolicy = FetchPolicy.CacheFirst,
       failFast = true,
     )
     val receivedFirst = prefetch.receiveAsFlow().first()
     checkNotNull(receivedFirst.data)
 
-    val keyToRemove = "book-1"
-    apollo.apolloStore.remove(CacheKey(keyToRemove), cascade = true)
-
-    apollo.apolloStore.dump().forEach { (cacheType, cacheContent) ->
-      check(!cacheContent.containsKey(keyToRemove)) { "${cacheType.simpleName} still contains key with id=$keyToRemove"}
-    }
+    val (secondCall, secondJob) = watch(
+      query = GetBookQuery(id = "book-id"),
+      fetchPolicy = FetchPolicy.CacheOnly,
+      failFast = true,
+    )
+    val receivedSecond = secondCall.receiveAsFlow().first()
+    checkNotNull(receivedSecond.data).viewer
 
     prefetchJob.cancel()
+    secondJob.cancel()
   }
 }
