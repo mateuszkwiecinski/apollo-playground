@@ -1,32 +1,25 @@
-query GetAuthor($id: ID!) {
+query Shelf($id: ID!) {
   viewer {
-    author(id: $id) {
-      id,
-      name,
-      topBook {
-        id,
-        name
-        author {
-          id
-        }
+    shelf(id: $id) {
+      id
+      books {
+        ...bookFragment
       }
     }
   }
 }
 
-query GetBook($id: ID!) {
+
+query BooksByIds($ids: [ID!]!) {
   viewer {
-    book(id: $id) {
-      ...bookData
-      author {
-        id,
-        name
-      }
+    nodes(ids: $ids) {
+      ...bookFragment
     }
   }
 }
 
-fragment bookData on Book {
+
+fragment bookFragment on Book {
   id,
   name
 }

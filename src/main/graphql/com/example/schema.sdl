@@ -3,18 +3,21 @@ type Query {
 }
 
 type Viewer {
-  author(id: ID!): Author!
-  book(id: ID!): Book!
+  shelf(id: ID!): Shelf!
+  node(ids: ID!): Node
+  nodes(ids: [ID!]!): [Node]!
 }
 
-type Book {
+type Shelf {
   id: ID!
-  name: String!
-  author: Author!
+  books: [Book!]!
 }
 
-type Author {
+type Book implements Node {
   id: ID!
   name: String!
-  topBook: Book!
+}
+
+interface Node {
+  id: ID!
 }

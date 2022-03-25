@@ -1,19 +1,15 @@
 plugins {
   id 'org.jetbrains.kotlin.jvm' version '1.6.10'
-  id "com.apollographql.apollo3" version "3.0.0"
-}
-
-repositories {
-  mavenCentral()
+  id "com.apollographql.apollo3" version "3.1.1-SNAPSHOT"
 }
 
 dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib"
   implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
-  implementation "com.apollographql.apollo3:apollo-runtime:3.0.0"
+  implementation "com.apollographql.apollo3:apollo-runtime:3.1.1-SNAPSHOT"
   implementation "com.squareup.okhttp3:mockwebserver:4.9.0"
-  implementation "com.apollographql.apollo3:apollo-normalized-cache-sqlite:3.0.0"
-  implementation "com.apollographql.apollo3:apollo-normalized-cache:3.0.0"
+  implementation "com.apollographql.apollo3:apollo-normalized-cache-sqlite:3.1.1-SNAPSHOT"
+  implementation "com.apollographql.apollo3:apollo-normalized-cache:3.1.1-SNAPSHOT"
 
   testImplementation "org.junit.jupiter:junit-jupiter-api:5.7.0"
   testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.7.0"
@@ -37,4 +33,5 @@ version '1.0-SNAPSHOT'
 apollo {
   packageName.set("com.example")
   srcDir(file("src/main/graphql/"))
+  addTypename.set("ifAbstract")
 }

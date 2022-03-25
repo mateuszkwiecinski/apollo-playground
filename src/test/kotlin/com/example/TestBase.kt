@@ -2,16 +2,33 @@ package com.example
 
 import com.apollographql.apollo3.ApolloClient
 import com.apollographql.apollo3.api.ApolloResponse
+import com.apollographql.apollo3.api.CompiledField
+import com.apollographql.apollo3.api.Executable
 import com.apollographql.apollo3.api.Query
-import com.apollographql.apollo3.cache.normalized.*
+import com.apollographql.apollo3.cache.normalized.FetchPolicy
+import com.apollographql.apollo3.cache.normalized.api.CacheKey
+import com.apollographql.apollo3.cache.normalized.api.CacheKeyGenerator
+import com.apollographql.apollo3.cache.normalized.api.CacheKeyGeneratorContext
+import com.apollographql.apollo3.cache.normalized.api.CacheKeyResolver
 import com.apollographql.apollo3.cache.normalized.api.MemoryCacheFactory
 import com.apollographql.apollo3.cache.normalized.api.NormalizedCache
+import com.apollographql.apollo3.cache.normalized.api.TypePolicyCacheKeyGenerator
+import com.apollographql.apollo3.cache.normalized.apolloStore
+import com.apollographql.apollo3.cache.normalized.fetchPolicy
+import com.apollographql.apollo3.cache.normalized.normalizedCache
+import com.apollographql.apollo3.cache.normalized.refetchPolicy
 import com.apollographql.apollo3.cache.normalized.sql.SqlNormalizedCacheFactory
+import com.apollographql.apollo3.cache.normalized.storePartialResponses
+import com.apollographql.apollo3.cache.normalized.watch
 import com.apollographql.apollo3.network.okHttpClient
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.OkHttpClient
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -27,14 +44,13 @@ abstract class TestBase {
 
   @BeforeEach
   internal fun setUp() {
-    val persistedCache = createInMemorySqlNormalizedCacheFactory()
-    val inMemoryCache = MemoryCacheFactory()
+    val lruNormalizedCacheFactory = MemoryCacheFactory()
     apollo = ApolloClient.Builder()
       .normalizedCache(
-        normalizedCacheFactory = inMemoryCache.chain(persistedCache),
+        normalizedCacheFactory = lruNormalizedCacheFactory,
         cacheKeyGenerator = IdBasedCacheKeyResolver,
         cacheResolver = IdBasedCacheKeyResolver,
-        writeToCacheAsynchronously = false
+        writeToCacheAsynchronously = false,
       )
       .serverUrl(mockWebServer.mockWebServer.url("/").toString())
       .okHttpClient(client)
@@ -59,7 +75,7 @@ abstract class TestBase {
         .refetchPolicy(refetchPolicy)
         .storePartialResponses(true)
         .run {
-          if(failFast) {
+          if (failFast) {
             toFlow()
           } else {
             watch()

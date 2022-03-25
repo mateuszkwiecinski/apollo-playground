@@ -1,9 +1,6 @@
 package com.example
 
 import com.apollographql.apollo3.cache.normalized.FetchPolicy
-import com.apollographql.apollo3.cache.normalized.api.CacheKey
-import com.apollographql.apollo3.cache.normalized.apolloStore
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.runBlocking
@@ -12,25 +9,21 @@ import org.junit.jupiter.api.Test
 class Test : TestBase() {
 
   @Test
-  fun `the same object, nested`() = runBlocking {
-    mockWebServer.enqueue(nestedResponse)
-    val (prefetch, prefetchJob) = watch(
-      query = GetAuthorQuery(id = "author-id"),
-      fetchPolicy = FetchPolicy.NetworkOnly,
-      failFast = true,
-    )
-    val receivedFirst = prefetch.receiveAsFlow().first()
-    checkNotNull(receivedFirst.data)
-
-    val (secondCall, secondJob) = watch(
-      query = GetBookQuery(id = "book-id"),
+  fun `nested response`() = runBlocking {
+    mockWebServer.enqueue(response)
+    val (prefetch, prefetchJob) = watch(ShelfQuery(id = "test"), fetchPolicy = FetchPolicy.NetworkOnly, refetchPolicy = FetchPolicy.CacheFirst)
+    val prefetched = prefetch.receiveAsFlow().first()
+    val shelf = checkNotNull(prefetched.data?.viewer?.shelf)
+    val (cache_only, cacheOnlyJob) = watch(
+      query = BooksByIdsQuery(ids = listOf(shelf.books.first().bookFragment.id)),
       fetchPolicy = FetchPolicy.CacheOnly,
+      refetchPolicy = FetchPolicy.CacheFirst,
       failFast = true,
     )
-    val receivedSecond = secondCall.receiveAsFlow().first()
-    checkNotNull(receivedSecond.data).viewer
+    val list = cache_only.receiveAsFlow().first()
+    check(prefetched.data?.viewer?.shelf?.books?.first()?.bookFragment == list.data?.viewer?.nodes?.first()?.bookFragment)
 
     prefetchJob.cancel()
-    secondJob.cancel()
+    cacheOnlyJob.cancel()
   }
 }

@@ -2,28 +2,27 @@ package com.example
 
 import org.intellij.lang.annotations.Language
 
-
 @Language("JSON")
-val nestedResponse = """
-  {
+val response = """{
     "data": {
       "viewer": {
-        "__typename": "Viewer",
-        "author": {
-          "__typename": "Author",
-          "id": "author-id",
-          "name": "author-name",
-          "topBook": {
-            "__typename": "Book",
-            "id": "book-id",
-            "name": "book-name",
-            "author": {
-              "__typename": "Author",
-              "id": "author-id"
+        "__typename": "Viewer", 
+        "shelf": {
+          "__typename": "Shelf",
+          "id": "shelf-id",
+          "books": [
+            {
+              "__typename": "Book",
+              "id": "id=1",
+              "name": "ok-2"
+            },
+            {
+              "__typename": "Book",
+              "id": "id=2",
+              "name": "ok-2"
             }
-          }
+          ]
         }
       }
     }
-  }
-""".trimIndent()
+  }"""
