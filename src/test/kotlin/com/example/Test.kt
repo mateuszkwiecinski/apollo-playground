@@ -9,21 +9,30 @@ import org.junit.jupiter.api.Test
 class Test : TestBase() {
 
   @Test
-  fun `nested response`() = runBlocking {
-    mockWebServer.enqueue(response)
-    val (prefetch, prefetchJob) = watch(ShelfQuery(id = "test"), fetchPolicy = FetchPolicy.NetworkOnly, refetchPolicy = FetchPolicy.CacheFirst)
-    val prefetched = prefetch.receiveAsFlow().first()
-    val shelf = checkNotNull(prefetched.data?.viewer?.shelf)
+  fun `watch response`() = runBlocking {
     val (cache_only, cacheOnlyJob) = watch(
-      query = BooksByIdsQuery(ids = listOf(shelf.books.first().bookFragment.id)),
+      query = ShelfQuery(id = "test"),
+      fetchPolicy = FetchPolicy.CacheOnly,
+      refetchPolicy = FetchPolicy.CacheFirst,
+      failFast = false,
+    )
+    val list = cache_only.receiveAsFlow().first()
+    check(list.data == null)
+
+    cacheOnlyJob.cancel()
+  }
+
+  @Test
+  fun `toFlow response`() = runBlocking {
+    val (cache_only, cacheOnlyJob) = watch(
+      query = ShelfQuery(id = "test"),
       fetchPolicy = FetchPolicy.CacheOnly,
       refetchPolicy = FetchPolicy.CacheFirst,
       failFast = true,
     )
     val list = cache_only.receiveAsFlow().first()
-    check(prefetched.data?.viewer?.shelf?.books?.first()?.bookFragment == list.data?.viewer?.nodes?.first()?.bookFragment)
+    check(list.data == null)
 
-    prefetchJob.cancel()
     cacheOnlyJob.cancel()
   }
 }
